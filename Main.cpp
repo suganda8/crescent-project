@@ -2,27 +2,41 @@
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
 #include<stb/stb_image.h>
+#include<glm/glm.hpp>
+#include<glm/gtc/matrix_transform.hpp>
+#include<glm/gtc/type_ptr.hpp>
 
 #include"Shader.h"
 #include"Texture.h"
 #include"VAO.h"
 #include"VBO.h"
 #include"EBO.h"
+#include"Camera.h"
+
 
 using namespace std;
 
+const unsigned int width = 800;
+const unsigned int height = 800;
+
 GLfloat vertices[] =
 {
-	-0.5f,	-0.5f, 0.0f,	1.0f, 0.0f,	0.0f,	0.0f, 0.0f,		// Lower left corner
-	-0.5f,	 0.5f, 0.0f,	0.0f, 1.0f,	0.0f,	0.0f, 1.0f,		// Upper left corner
-	 0.5f,	 0.5f, 0.0f,	0.0f, 0.0f,	1.0f,	1.0f, 1.0f,		// Upper right corner
-	 0.5f,	-0.5f, 0.0f,	1.0f, 1.0f,	1.0f,	1.0f, 0.0f,		// Lower right corner
+	// COORDINATES - COLORS - TEXTURE COORDINATES
+	-0.5f,	0.0f,  0.5f,	0.83f, 0.70f, 0.44f,	0.0f, 0.0f,		// Lower left corner
+	-0.5f,	0.0f, -0.5f,	0.83f, 0.70f, 0.44f,	5.0f, 0.0f,		// Upper left corner
+	 0.5f,	0.0f, -0.5f,	0.83f, 0.70f, 0.44f,	0.0f, 0.0f,		// Upper right corner
+	 0.5f,	0.0f,  0.5f,	0.83f, 0.70f, 0.44f,	5.0f, 0.0f,		// Lower right corner
+	 0.0f,	0.8f,  0.0f,	0.92f, 0.86f, 0.76f,	2.5f, 5.0f,		// Lower right corner
 };
 
 GLuint indices[] =
 {
-	0, 2, 1, // Upper Triangle
-	0, 3, 2, // Lower Triangle
+	0, 1, 2,
+	0, 2, 3,
+	0, 1, 4,
+	1, 2, 4,
+	2, 3, 4,
+	3, 0, 4
 };
 
 int main()
@@ -36,7 +50,7 @@ int main()
 	// GLFW using Core (Modern OpenGL - not compatibility one)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(800, 800, "Crescent", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(width, height, "Crescent", NULL, NULL);
 
 	if (window == NULL)
 	{
@@ -50,7 +64,7 @@ int main()
 
 	// Specify the viewport of OpenGL in the window
 	// In this case the viewport goes from x = 0, y = 0, to x = 800, y = 800
-	glViewport(0, 0, 800, 800);
+	glViewport(0, 0, width, height);
 
 	// Generates Shader object using shaders default.vert and default vert
 	Shader shaderProgram("default.vert", "default.frag");
@@ -73,10 +87,6 @@ int main()
 	VBO1.Unbind();
 	EBO1.Unbind();
 
-	// Gets ID of uniform called "scale"
-	GLuint uniformID = glGetUniformLocation(shaderProgram.ID, "scale");
-
-
 	/*
 	* I'm doing this relative path thing in order to centralize all the resources into one folder and not
 	* duplicate them between tutorial folders. You can just copy paste the resources from the 'Resources'
@@ -94,8 +104,12 @@ int main()
 
 	// Original code from the tutorial
 	// Texture
-	Texture popCat("pop_cat.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+	Texture popCat("brick.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
 	popCat.texUnit(shaderProgram, "tex0", 0);
+
+	glEnable(GL_DEPTH_TEST);
+
+	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 
 	// Main Loop Event
 	while (!glfwWindowShouldClose(window))
@@ -103,17 +117,19 @@ int main()
 		// Specify color of background
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 		// Clear the back buffer and assign the new color to it
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		// Swap the back buffer with the front buffer
 		shaderProgram.Activate();
-		// Assigns a value to the uniform; NOTE: Must always be done after activating the Shader Program
-		glUniform1f(uniformID, 0.5f);
+
+		camera.Inputs(window);
+		camera.Matrix(45.0f, 0.1f, 100.0f, shaderProgram, "camMatrix");
+
 		// Binds texture so that is appears in rendering
 		popCat.Bind();
 		// Bind the VAO so OpenGL knows to use it
 		VAO1.Bind();
 		// Draw the triangle using the GL_TRIANGLES primitive
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, sizeof(indices)/sizeof(int), GL_UNSIGNED_INT, 0);
 		// Swap the back buffer with the front buffer
 		glfwSwapBuffers(window);
 

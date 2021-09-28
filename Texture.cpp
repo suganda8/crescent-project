@@ -2,17 +2,22 @@
 
 Texture::Texture(const char* image, GLenum texType, GLenum slot, GLenum format, GLenum pixelType)
 {
+	// Assigns the type of the texture ot the texture object
 	type = texType;
-	// Texture
+
+	// Stores the width, height, and the number of color channels of the image
 	int widthImg, heightImg, numColCh;
 
 	// Why we need to flip STB?
 	// So basically OpenGL reads images from Bottom Left Corner to the Top Right Corner
 	// STB loads images from the Top Left Corner to Bottom Right Corner
+	// Flips the image so it appears right side up
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char* bytes = stbi_load("pop_cat.png", &widthImg, &heightImg, &numColCh, 0);
+	unsigned char* bytes = stbi_load(image, &widthImg, &heightImg, &numColCh, 0);
 
+	// Generates an OpenGL texture object
 	glGenTextures(1, &ID);
+	// Assigns the texture to a Texture Unit
 	glActiveTexture(slot);
 	glBindTexture(texType, ID);
 
@@ -40,7 +45,7 @@ Texture::Texture(const char* image, GLenum texType, GLenum slot, GLenum format, 
 	glBindTexture(texType, 0);
 }
 
-void Texture::texUnit(Shader shader, const char* uniform, GLuint unit)
+void Texture::texUnit(Shader& shader, const char* uniform, GLuint unit)
 {
 	// Gets the location of the uniform
 	GLuint texUniform = glGetUniformLocation(shader.ID, uniform);
