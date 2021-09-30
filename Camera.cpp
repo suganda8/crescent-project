@@ -16,7 +16,7 @@ void Camera::updateMatrix(float FOVdeg, float nearPlane, float farPlane)
 	// Makes camera look in the right direction from the right position
 	view = glm::lookAt(Position, Position + Orientation, Up);
 	// Adds perspective to the scene
-	projection = glm::perspective(glm::radians(FOVdeg), (float)(width / height), nearPlane, farPlane);
+	projection = glm::perspective(glm::radians(FOVdeg), (float)width / height, nearPlane, farPlane);
 
 	// Sets new camera matrix
 	cameraMatrix = projection * view;
@@ -97,7 +97,13 @@ void Camera::Inputs(GLFWwindow* window)
 		glm::vec3 newOrientation = glm::rotate(Orientation, glm::radians(-rotX), glm::normalize(glm::cross(Orientation, Up)));
 
 		// Decides whether or not the next vertical Orientation is legal or not
-		if (!((glm::angle(newOrientation, Up) <= glm::radians(-5.0f)) or (glm::angle(newOrientation, -Up) <= glm::radians(5.0f))))
+		//if (!((glm::angle(newOrientation, Up) <= glm::radians(-5.0f)) or (glm::angle(newOrientation, -Up) <= glm::radians(5.0f))))
+		//{
+		//	Orientation = newOrientation;
+		//}
+
+		// Decides whether or not the next vertical Orientation is legal or not
+		if (abs(glm::angle(newOrientation, Up) - glm::radians(90.0f)) <= glm::radians(85.0f))
 		{
 			Orientation = newOrientation;
 		}
